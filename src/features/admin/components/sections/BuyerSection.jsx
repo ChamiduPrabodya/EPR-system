@@ -1,21 +1,50 @@
 import DataTable from "../../../../common/components/DataTable";
 import FormField from "../../../../common/components/FormField";
+import StatusTag from "../../../../common/components/StatusTag";
 import { formatDate } from "../../../../common/utils/formatters";
 
-export default function BuyerSection({ form, items, onChange, onSubmit }) {
+export default function BuyerSection({
+  form,
+  items,
+  onChange,
+  onSubmit,
+  onEdit,
+  onDelete,
+  onCancelEdit,
+  editingId,
+  inventoryOptions,
+  getInventoryName,
+}) {
   return (
     <section className="feature-page-grid">
       <article className="panel records-panel">
         <DataTable
-          title="Buyer orders"
-          description="Review all current buyer requests and planned delivery dates."
-          emptyMessage="No buyer orders yet. Add the first order on the left."
-          headers={["Buyer", "Product", "Qty", "Delivery"]}
+          title="Sales orders"
+          description="Fulfilled orders reduce inventory automatically. Pending and confirmed orders stay planned only."
+          emptyMessage="No sales orders yet. Add the first order on the right."
+          headers={["Buyer", "Product", "Qty", "Delivery", "Status", "Actions"]}
           rows={items.map((buyer) => [
             buyer.buyerName,
-            buyer.buyerProduct,
+            getInventoryName(buyer.inventoryItemId),
             buyer.buyerQty,
             formatDate(buyer.deliveryDate),
+            <StatusTag
+              key={`${buyer.id}-status`}
+              label={buyer.orderStatus}
+              tone={buyer.orderStatus === "Fulfilled" ? "good" : buyer.orderStatus === "Confirmed" ? "warn" : "neutral"}
+            />,
+            <div className="table-actions" key={buyer.id}>
+              <button className="table-action-button" type="button" onClick={() => onEdit(buyer.id)}>
+                Edit
+              </button>
+              <button
+                className="table-action-button table-action-danger"
+                type="button"
+                onClick={() => onDelete(buyer.id)}
+              >
+                Delete
+              </button>
+            </div>,
           ])}
         />
       </article>
@@ -23,9 +52,11 @@ export default function BuyerSection({ form, items, onChange, onSubmit }) {
       <article className="panel form-panel">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">Quick add</p>
-            <h3 id="buyers">Capture customer orders clearly</h3>
-            <p className="panel-copy">Add the next order only after you review what is already scheduled.</p>
+            <p className="eyebrow">{editingId ? "Edit order" : "Quick add"}</p>
+            <h3 id="buyers">Capture customer orders against inventory items</h3>
+            <p className="panel-copy">
+              Sales orders link directly to inventory. Stock only deducts when the order is fulfilled.
+            </p>
           </div>
         </div>
 
@@ -41,13 +72,14 @@ export default function BuyerSection({ form, items, onChange, onSubmit }) {
           </FormField>
 
           <FormField label="Product ordered">
-            <input
-              type="text"
-              placeholder="Packed herb box"
-              required
-              value={form.buyerProduct}
-              onChange={(event) => onChange("buyerProduct", event.target.value)}
-            />
+            <select value={form.inventoryItemId} onChange={(event) => onChange("inventoryItemId", event.target.value)}>
+              <option value="">Select inventory item</option>
+              {inventoryOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </FormField>
 
           <FormField label="Quantity">
@@ -70,7 +102,23 @@ export default function BuyerSection({ form, items, onChange, onSubmit }) {
             />
           </FormField>
 
-          <button type="submit">Save sales order</button>
+          <FormField label="Order status">
+            <select value={form.orderStatus} onChange={(event) => onChange("orderStatus", event.target.value)}>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Fulfilled">Fulfilled</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </FormField>
+
+          <div className="form-action-row">
+            <button type="submit">{editingId ? "Update sales order" : "Save sales order"}</button>
+            {editingId ? (
+              <button className="secondary-button" type="button" onClick={onCancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
         </form>
       </article>
     </section>

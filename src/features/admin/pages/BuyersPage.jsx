@@ -5,7 +5,18 @@ import BuyerSection from "../components/sections/BuyerSection";
 import { useAdminData } from "../context/AdminDataContext";
 
 export default function BuyersPage() {
-  const { data, buyerForm, updateBuyerForm, handleBuyerSubmit } = useAdminData();
+  const {
+    data,
+    buyerForm,
+    editingBuyerId,
+    inventoryOptions,
+    updateBuyerForm,
+    handleBuyerSubmit,
+    beginBuyerEdit,
+    cancelBuyerEdit,
+    deleteBuyer,
+    getInventoryName,
+  } = useAdminData();
   const totalUnits = data.buyers.reduce((total, item) => total + item.buyerQty, 0);
 
   useEffect(() => {
@@ -22,13 +33,20 @@ export default function BuyersPage() {
         stats={[
           { label: "Orders", value: data.buyers.length },
           { label: "Units ordered", value: totalUnits },
+          { label: "Fulfilled", value: data.buyers.filter((item) => item.orderStatus === "Fulfilled").length },
         ]}
       />
       <BuyerSection
         form={buyerForm}
         items={data.buyers}
+        editingId={editingBuyerId}
+        inventoryOptions={inventoryOptions}
         onChange={updateBuyerForm}
         onSubmit={handleBuyerSubmit}
+        onEdit={beginBuyerEdit}
+        onDelete={deleteBuyer}
+        onCancelEdit={cancelBuyerEdit}
+        getInventoryName={getInventoryName}
       />
     </>
   );

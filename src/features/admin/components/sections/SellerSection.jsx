@@ -1,20 +1,43 @@
 import DataTable from "../../../../common/components/DataTable";
 import FormField from "../../../../common/components/FormField";
 
-export default function SellerSection({ form, items, onChange, onSubmit }) {
+export default function SellerSection({
+  form,
+  items,
+  onChange,
+  onSubmit,
+  onEdit,
+  onDelete,
+  onCancelEdit,
+  editingId,
+  getSellerAvailableQty,
+}) {
   return (
     <section className="feature-page-grid">
       <article className="panel records-panel">
         <DataTable
-          title="Seller records"
-          description="Review saved suppliers and the raw materials they provided."
-          emptyMessage="No seller records yet. Add the first supplier on the left."
-          headers={["Seller", "Material", "Qty", "Contact"]}
+          title="Supplier receipts"
+          description="These raw-material receipts feed operations. Available quantity drops as jobs consume material."
+          emptyMessage="No supplier receipts yet. Add the first supplier intake on the right."
+          headers={["Supplier", "Material", "Received", "Available", "Contact", "Actions"]}
           rows={items.map((seller) => [
             seller.sellerName,
             seller.materialName,
             seller.materialQty,
+            getSellerAvailableQty(seller.id),
             seller.sellerContact,
+            <div className="table-actions" key={seller.id}>
+              <button className="table-action-button" type="button" onClick={() => onEdit(seller.id)}>
+                Edit
+              </button>
+              <button
+                className="table-action-button table-action-danger"
+                type="button"
+                onClick={() => onDelete(seller.id)}
+              >
+                Delete
+              </button>
+            </div>,
           ])}
         />
       </article>
@@ -22,9 +45,11 @@ export default function SellerSection({ form, items, onChange, onSubmit }) {
       <article className="panel form-panel">
         <div className="panel-head">
           <div>
-            <p className="eyebrow">Quick add</p>
-            <h3 id="sellers">Create a supplier record and log incoming material</h3>
-            <p className="panel-copy">Add one delivery at a time so procurement records stay clean.</p>
+            <p className="eyebrow">{editingId ? "Edit supplier" : "Quick add"}</p>
+            <h3 id="sellers">Create a supplier receipt and log incoming raw material</h3>
+            <p className="panel-copy">
+              Supplier receipts are the first step in the ERP flow. Operations will use this quantity later.
+            </p>
           </div>
         </div>
 
@@ -49,7 +74,7 @@ export default function SellerSection({ form, items, onChange, onSubmit }) {
             />
           </FormField>
 
-          <FormField label="Quantity">
+          <FormField label="Received quantity">
             <input
               type="number"
               min="1"
@@ -70,7 +95,14 @@ export default function SellerSection({ form, items, onChange, onSubmit }) {
             />
           </FormField>
 
-          <button type="submit">Save supplier intake</button>
+          <div className="form-action-row">
+            <button type="submit">{editingId ? "Update supplier receipt" : "Save supplier receipt"}</button>
+            {editingId ? (
+              <button className="secondary-button" type="button" onClick={onCancelEdit}>
+                Cancel
+              </button>
+            ) : null}
+          </div>
         </form>
       </article>
     </section>

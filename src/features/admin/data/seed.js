@@ -3,12 +3,14 @@ export const storageKey = "supplyflow-admin-data";
 export const defaultAdminData = {
   sellers: [
     {
+      id: "seller-1",
       sellerName: "Green Leaf Traders",
       materialName: "Dried herbs",
       materialQty: 250,
       sellerContact: "+94 77 123 4567",
     },
     {
+      id: "seller-2",
       sellerName: "Harvest Source",
       materialName: "Natural fiber",
       materialQty: 140,
@@ -17,43 +19,61 @@ export const defaultAdminData = {
   ],
   processing: [
     {
-      productName: "Premium herb box",
+      id: "process-1",
+      sourceSellerId: "seller-1",
+      inventoryItemId: "inventory-1",
+      productName: "Packed herb box",
       featureType: "Packing",
       featureCost: 1200,
+      inputQty: 120,
+      outputQty: 55,
       processStatus: "Completed",
     },
     {
-      productName: "Retail fiber pack",
+      id: "process-2",
+      sourceSellerId: "seller-2",
+      inventoryItemId: "inventory-2",
+      productName: "Fiber packaging set",
       featureType: "Delivery",
       featureCost: 800,
+      inputQty: 45,
+      outputQty: 25,
       processStatus: "In Progress",
     },
   ],
   buyers: [
     {
+      id: "buyer-1",
       buyerName: "City Retail Hub",
+      inventoryItemId: "inventory-1",
       buyerProduct: "Packed herb box",
-      buyerQty: 80,
+      buyerQty: 40,
       deliveryDate: "2026-05-08",
+      orderStatus: "Fulfilled",
     },
     {
+      id: "buyer-2",
       buyerName: "Market Lane Stores",
+      inventoryItemId: "inventory-2",
       buyerProduct: "Fiber packaging set",
       buyerQty: 45,
       deliveryDate: "2026-05-12",
+      orderStatus: "Confirmed",
     },
   ],
   inventory: [
     {
+      id: "inventory-1",
       inventoryName: "Packed herb box",
-      inventoryQty: 55,
+      inventoryQty: 0,
       inventoryMax: 300,
-      inventoryLow: 60,
+      inventoryLow: 30,
     },
     {
+      id: "inventory-2",
       inventoryName: "Fiber packaging set",
-      inventoryQty: 215,
-      inventoryMax: 200,
+      inventoryQty: 190,
+      inventoryMax: 260,
       inventoryLow: 50,
     },
   ],
@@ -67,17 +87,21 @@ export const emptySellerForm = {
 };
 
 export const emptyProcessForm = {
-  productName: "",
+  sourceSellerId: "",
+  inventoryItemId: "",
   featureType: "Packing",
   featureCost: "",
+  inputQty: "",
+  outputQty: "",
   processStatus: "Queued",
 };
 
 export const emptyBuyerForm = {
   buyerName: "",
-  buyerProduct: "",
+  inventoryItemId: "",
   buyerQty: "",
   deliveryDate: "",
+  orderStatus: "Pending",
 };
 
 export const emptyInventoryForm = {

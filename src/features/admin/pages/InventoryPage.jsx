@@ -10,9 +10,16 @@ export default function InventoryPage() {
     data,
     alerts,
     inventoryForm,
+    editingInventoryId,
     updateInventoryForm,
     handleInventorySubmit,
+    beginInventoryEdit,
+    cancelInventoryEdit,
+    deleteInventory,
     getInventoryStatus,
+    getInventoryCurrentQty,
+    getInventoryProducedQty,
+    getInventorySoldQty,
   } = useAdminData();
   const healthyItems = data.inventory.filter((item) => getInventoryStatus(item) === "Healthy").length;
 
@@ -30,14 +37,25 @@ export default function InventoryPage() {
         stats={[
           { label: "Items", value: data.inventory.length },
           { label: "Healthy", value: healthyItems },
+          {
+            label: "Current stock",
+            value: data.inventory.reduce((total, item) => total + getInventoryCurrentQty(item), 0),
+          },
         ]}
       />
       <InventorySection
         form={inventoryForm}
         items={data.inventory}
+        editingId={editingInventoryId}
         onChange={updateInventoryForm}
         onSubmit={handleInventorySubmit}
+        onEdit={beginInventoryEdit}
+        onDelete={deleteInventory}
+        onCancelEdit={cancelInventoryEdit}
         getInventoryStatus={getInventoryStatus}
+        getInventoryCurrentQty={getInventoryCurrentQty}
+        getInventoryProducedQty={getInventoryProducedQty}
+        getInventorySoldQty={getInventorySoldQty}
       />
       <AlertsPanel alerts={alerts} />
     </>

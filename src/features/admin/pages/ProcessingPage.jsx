@@ -5,7 +5,20 @@ import ProcessingSection from "../components/sections/ProcessingSection";
 import { useAdminData } from "../context/AdminDataContext";
 
 export default function ProcessingPage() {
-  const { data, processForm, updateProcessForm, handleProcessSubmit } = useAdminData();
+  const {
+    data,
+    processForm,
+    editingProcessId,
+    sellerOptions,
+    inventoryOptions,
+    updateProcessForm,
+    handleProcessSubmit,
+    beginProcessEdit,
+    cancelProcessEdit,
+    deleteProcess,
+    getSellerMaterialLabel,
+    getInventoryName,
+  } = useAdminData();
   const completedJobs = data.processing.filter((item) => item.processStatus === "Completed").length;
 
   useEffect(() => {
@@ -22,13 +35,22 @@ export default function ProcessingPage() {
         stats={[
           { label: "Jobs", value: data.processing.length },
           { label: "Completed", value: completedJobs },
+          { label: "Queued", value: data.processing.filter((item) => item.processStatus === "Queued").length },
         ]}
       />
       <ProcessingSection
         form={processForm}
         items={data.processing}
+        editingId={editingProcessId}
+        sellerOptions={sellerOptions}
+        inventoryOptions={inventoryOptions}
         onChange={updateProcessForm}
         onSubmit={handleProcessSubmit}
+        onEdit={beginProcessEdit}
+        onDelete={deleteProcess}
+        onCancelEdit={cancelProcessEdit}
+        getSellerMaterialLabel={getSellerMaterialLabel}
+        getInventoryName={getInventoryName}
       />
     </>
   );
