@@ -5,6 +5,7 @@ import LoginPage from "../../features/auth/pages/LoginPage";
 import AdminLayout from "../../features/admin/components/AdminLayout";
 import AdminOverviewPage from "../../features/admin/pages/AdminOverviewPage";
 import BuyersPage from "../../features/admin/pages/BuyersPage";
+import CostsPage from "../../features/admin/pages/CostsPage";
 import InventoryPage from "../../features/admin/pages/InventoryPage";
 import ProcessingPage from "../../features/admin/pages/ProcessingPage";
 import SellersPage from "../../features/admin/pages/SellersPage";
@@ -30,6 +31,7 @@ export default function AppRouter() {
         <Route path="processing" element={<ProcessingPage />} />
         <Route path="buyers" element={<BuyersPage />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="costs" element={<CostsPage />} />
       </Route>
       <Route path="*" element={<Navigate to={appRoutes.admin} replace />} />
     </Routes>

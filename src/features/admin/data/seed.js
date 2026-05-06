@@ -7,6 +7,7 @@ export const defaultAdminData = {
       sellerName: "Green Leaf Traders",
       materialName: "Dried herbs",
       materialQty: 250,
+      materialUnitCost: 50,
       sellerContact: "+94 77 123 4567",
     },
     {
@@ -14,6 +15,7 @@ export const defaultAdminData = {
       sellerName: "Harvest Source",
       materialName: "Natural fiber",
       materialQty: 140,
+      materialUnitCost: 40,
       sellerContact: "+94 71 555 8855",
     },
   ],
@@ -25,7 +27,7 @@ export const defaultAdminData = {
       productName: "Packed herb box",
       featureType: "Packing",
       featureCost: 1200,
-      inputQty: 120,
+      inputQty: 60,
       outputQty: 55,
       processStatus: "Completed",
     },
@@ -36,7 +38,7 @@ export const defaultAdminData = {
       productName: "Fiber packaging set",
       featureType: "Delivery",
       featureCost: 800,
-      inputQty: 45,
+      inputQty: 30,
       outputQty: 25,
       processStatus: "In Progress",
     },
@@ -50,6 +52,8 @@ export const defaultAdminData = {
       buyerQty: 40,
       deliveryDate: "2026-05-08",
       orderStatus: "Fulfilled",
+      saleUnitPrice: 90,
+      costUnitPrice: 84.36,
     },
     {
       id: "buyer-2",
@@ -59,6 +63,8 @@ export const defaultAdminData = {
       buyerQty: 45,
       deliveryDate: "2026-05-12",
       orderStatus: "Confirmed",
+      saleUnitPrice: 95,
+      costUnitPrice: 0,
     },
   ],
   inventory: [
@@ -66,6 +72,9 @@ export const defaultAdminData = {
       id: "inventory-1",
       inventoryName: "Packed herb box",
       inventoryQty: 0,
+      openingUnitCost: 0,
+      packingCostPerUnit: 8,
+      sellingPricePerUnit: 90,
       inventoryMax: 300,
       inventoryLow: 30,
     },
@@ -73,6 +82,9 @@ export const defaultAdminData = {
       id: "inventory-2",
       inventoryName: "Fiber packaging set",
       inventoryQty: 190,
+      openingUnitCost: 48,
+      packingCostPerUnit: 5,
+      sellingPricePerUnit: 95,
       inventoryMax: 260,
       inventoryLow: 50,
     },
@@ -83,6 +95,7 @@ export const emptySellerForm = {
   sellerName: "",
   materialName: "",
   materialQty: "",
+  materialUnitCost: "",
   sellerContact: "",
 };
 
@@ -102,11 +115,15 @@ export const emptyBuyerForm = {
   buyerQty: "",
   deliveryDate: "",
   orderStatus: "Pending",
+  saleUnitPrice: "",
 };
 
 export const emptyInventoryForm = {
   inventoryName: "",
   inventoryQty: "",
+  openingUnitCost: "",
+  packingCostPerUnit: "",
+  sellingPricePerUnit: "",
   inventoryMax: "",
   inventoryLow: "",
 };

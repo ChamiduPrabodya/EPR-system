@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { appTheme } from "../../../app/theme";
+import { formatCurrency } from "../../../common/utils/formatters";
 import PageIntro from "../components/PageIntro";
 import BuyerSection from "../components/sections/BuyerSection";
 import { useAdminData } from "../context/AdminDataContext";
@@ -18,6 +19,10 @@ export default function BuyersPage() {
     getInventoryName,
   } = useAdminData();
   const totalUnits = data.buyers.reduce((total, item) => total + item.buyerQty, 0);
+  const totalSalesValue = data.buyers.reduce(
+    (total, item) => total + item.buyerQty * item.saleUnitPrice,
+    0,
+  );
 
   useEffect(() => {
     document.title = `${appTheme.appTitle} | Buyers`;
@@ -34,6 +39,7 @@ export default function BuyersPage() {
           { label: "Orders", value: data.buyers.length },
           { label: "Units ordered", value: totalUnits },
           { label: "Fulfilled", value: data.buyers.filter((item) => item.orderStatus === "Fulfilled").length },
+          { label: "Sales value", value: formatCurrency(totalSalesValue) },
         ]}
       />
       <BuyerSection

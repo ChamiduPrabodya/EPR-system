@@ -1,7 +1,7 @@
 import DataTable from "../../../../common/components/DataTable";
 import FormField from "../../../../common/components/FormField";
 import StatusTag from "../../../../common/components/StatusTag";
-import { formatDate } from "../../../../common/utils/formatters";
+import { formatCurrency } from "../../../../common/utils/formatters";
 
 export default function BuyerSection({
   form,
@@ -20,14 +20,16 @@ export default function BuyerSection({
       <article className="panel records-panel">
         <DataTable
           title="Sales orders"
-          description="Fulfilled orders reduce inventory automatically. Pending and confirmed orders stay planned only."
+          description="Sales totals multiply by quantity automatically. Fulfilled orders reduce inventory stock."
           emptyMessage="No sales orders yet. Add the first order on the right."
-          headers={["Buyer", "Product", "Qty", "Delivery", "Status", "Actions"]}
+          headers={["Buyer", "Product", "Qty", "Unit Price", "Sales Total", "Profit", "Status", "Actions"]}
           rows={items.map((buyer) => [
             buyer.buyerName,
             getInventoryName(buyer.inventoryItemId),
             buyer.buyerQty,
-            formatDate(buyer.deliveryDate),
+            formatCurrency(buyer.saleUnitPrice),
+            formatCurrency(buyer.buyerQty * buyer.saleUnitPrice),
+            formatCurrency(buyer.buyerQty * (buyer.saleUnitPrice - buyer.costUnitPrice)),
             <StatusTag
               key={`${buyer.id}-status`}
               label={buyer.orderStatus}
@@ -53,9 +55,9 @@ export default function BuyerSection({
         <div className="panel-head">
           <div>
             <p className="eyebrow">{editingId ? "Edit order" : "Quick add"}</p>
-            <h3 id="buyers">Capture customer orders against inventory items</h3>
+            <h3 id="buyers">Capture customer orders with selling price</h3>
             <p className="panel-copy">
-              Sales orders link directly to inventory. Stock only deducts when the order is fulfilled.
+              Selling price multiplies by quantity automatically, so 1 kg and 12 kg both calculate correctly.
             </p>
           </div>
         </div>
@@ -82,11 +84,22 @@ export default function BuyerSection({
             </select>
           </FormField>
 
+          <FormField label="Selling price per unit">
+            <input
+              type="number"
+              min="0"
+              placeholder="90"
+              required
+              value={form.saleUnitPrice}
+              onChange={(event) => onChange("saleUnitPrice", event.target.value)}
+            />
+          </FormField>
+
           <FormField label="Quantity">
             <input
               type="number"
               min="1"
-              placeholder="80"
+              placeholder="12"
               required
               value={form.buyerQty}
               onChange={(event) => onChange("buyerQty", event.target.value)}
@@ -110,6 +123,11 @@ export default function BuyerSection({
               <option value="Cancelled">Cancelled</option>
             </select>
           </FormField>
+
+          <div className="form-preview">
+            <strong>Calculated total</strong>
+            <span>{formatCurrency((Number(form.buyerQty) || 0) * (Number(form.saleUnitPrice) || 0))}</span>
+          </div>
 
           <div className="form-action-row">
             <button type="submit">{editingId ? "Update sales order" : "Save sales order"}</button>

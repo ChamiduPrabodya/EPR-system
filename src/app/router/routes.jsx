@@ -5,5 +5,6 @@ export const appRoutes = {
   adminProcessing: "/admin/processing",
   adminBuyers: "/admin/buyers",
   adminInventory: "/admin/inventory",
+  adminCosts: "/admin/costs",
   login: "/auth/login",
 };

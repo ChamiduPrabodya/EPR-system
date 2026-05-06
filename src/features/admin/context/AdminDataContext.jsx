@@ -27,7 +27,11 @@ export function AdminDataProvider({ children }) {
   }, [data]);
 
   const supplierAvailability = useMemo(() => buildSupplierAvailability(data), [data]);
-  const inventoryMetrics = useMemo(() => buildInventoryMetrics(data), [data]);
+  const processCostMetrics = useMemo(() => buildProcessCostMetrics(data), [data]);
+  const inventoryMetrics = useMemo(
+    () => buildInventoryMetrics(data, processCostMetrics),
+    [data, processCostMetrics],
+  );
   const alerts = useMemo(() => collectAlerts(data.inventory, inventoryMetrics), [data.inventory, inventoryMetrics]);
   const summary = useMemo(
     () => ({
@@ -58,6 +62,42 @@ export function AdminDataProvider({ children }) {
     [data.inventory],
   );
 
+  const actualCostRows = useMemo(
+    () =>
+      data.inventory.map((item) => {
+        const metric = inventoryMetrics[item.id];
+        return {
+          inventoryId: item.id,
+          inventoryName: item.inventoryName,
+          rawMaterialUnitCost: metric.latestRawUnitCost,
+          packingCostPerUnit: item.packingCostPerUnit,
+          processCostPerUnit: metric.latestProcessCostPerUnit,
+          actualCostPerUnit: metric.latestActualUnitCost,
+          sellingPricePerUnit: item.sellingPricePerUnit,
+          actualMarginPerUnit: item.sellingPricePerUnit - metric.latestActualUnitCost,
+        };
+      }),
+    [data.inventory, inventoryMetrics],
+  );
+
+  const currentCostRows = useMemo(
+    () =>
+      data.inventory.map((item) => {
+        const metric = inventoryMetrics[item.id];
+        return {
+          inventoryId: item.id,
+          inventoryName: item.inventoryName,
+          openingQty: item.inventoryQty,
+          currentQty: metric.currentQty,
+          currentCostPerUnit: metric.currentUnitCost,
+          currentStockValue: metric.currentStockValue,
+          sellingPricePerUnit: item.sellingPricePerUnit,
+          currentMarginPerUnit: item.sellingPricePerUnit - metric.currentUnitCost,
+        };
+      }),
+    [data.inventory, inventoryMetrics],
+  );
+
   const value = useMemo(
     () => ({
       data,
@@ -65,6 +105,8 @@ export function AdminDataProvider({ children }) {
       summary,
       sellerOptions,
       inventoryOptions,
+      actualCostRows,
+      currentCostRows,
       sellerForm,
       processForm,
       buyerForm,
@@ -80,7 +122,18 @@ export function AdminDataProvider({ children }) {
         setProcessForm((current) => ({ ...current, [field]: value }));
       },
       updateBuyerForm(field, value) {
-        setBuyerForm((current) => ({ ...current, [field]: value }));
+        setBuyerForm((current) => {
+          if (field === "inventoryItemId") {
+            const inventoryItem = data.inventory.find((item) => item.id === value);
+            return {
+              ...current,
+              inventoryItemId: value,
+              saleUnitPrice: inventoryItem ? String(inventoryItem.sellingPricePerUnit) : "",
+            };
+          }
+
+          return { ...current, [field]: value };
+        });
       },
       updateInventoryForm(field, value) {
         setInventoryForm((current) => ({ ...current, [field]: value }));
@@ -93,6 +146,7 @@ export function AdminDataProvider({ children }) {
           sellerName: sellerForm.sellerName.trim(),
           materialName: sellerForm.materialName.trim(),
           materialQty: Number(sellerForm.materialQty),
+          materialUnitCost: Number(sellerForm.materialUnitCost),
           sellerContact: sellerForm.sellerContact.trim(),
         };
 
@@ -153,6 +207,9 @@ export function AdminDataProvider({ children }) {
           return;
         }
 
+        const currentCostSnapshot =
+          inventoryMetrics[inventoryItem.id]?.currentUnitCost ?? (Number(inventoryItem.openingUnitCost) || 0);
+
         const record = {
           id: editingBuyerId || createId("buyer"),
           buyerName: buyerForm.buyerName.trim(),
@@ -161,10 +218,12 @@ export function AdminDataProvider({ children }) {
           buyerQty: Number(buyerForm.buyerQty),
           deliveryDate: buyerForm.deliveryDate,
           orderStatus: buyerForm.orderStatus,
+          saleUnitPrice: Number(buyerForm.saleUnitPrice || inventoryItem.sellingPricePerUnit),
+          costUnitPrice: currentCostSnapshot,
         };
 
         const nextData = upsertRecord(data, "buyers", record, editingBuyerId);
-        const nextInventoryMetrics = buildInventoryMetrics(nextData);
+        const nextInventoryMetrics = buildInventoryMetrics(nextData, buildProcessCostMetrics(nextData));
         const inventoryMetric = nextInventoryMetrics[inventoryItem.id];
 
         if (inventoryMetric && inventoryMetric.currentQty < 0) {
@@ -183,12 +242,15 @@ export function AdminDataProvider({ children }) {
           id: editingInventoryId || createId("inventory"),
           inventoryName: inventoryForm.inventoryName.trim(),
           inventoryQty: Number(inventoryForm.inventoryQty),
+          openingUnitCost: Number(inventoryForm.openingUnitCost),
+          packingCostPerUnit: Number(inventoryForm.packingCostPerUnit),
+          sellingPricePerUnit: Number(inventoryForm.sellingPricePerUnit),
           inventoryMax: Number(inventoryForm.inventoryMax),
           inventoryLow: Number(inventoryForm.inventoryLow),
         };
 
         const nextData = upsertRecord(data, "inventory", record, editingInventoryId);
-        const nextInventoryMetrics = buildInventoryMetrics(nextData);
+        const nextInventoryMetrics = buildInventoryMetrics(nextData, buildProcessCostMetrics(nextData));
         const inventoryMetric = nextInventoryMetrics[record.id];
 
         if (inventoryMetric && inventoryMetric.currentQty < 0) {
@@ -211,6 +273,7 @@ export function AdminDataProvider({ children }) {
           sellerName: seller.sellerName,
           materialName: seller.materialName,
           materialQty: String(seller.materialQty),
+          materialUnitCost: String(seller.materialUnitCost),
           sellerContact: seller.sellerContact,
         });
         setEditingSellerId(id);
@@ -246,6 +309,7 @@ export function AdminDataProvider({ children }) {
           buyerQty: String(buyer.buyerQty),
           deliveryDate: buyer.deliveryDate,
           orderStatus: buyer.orderStatus,
+          saleUnitPrice: String(buyer.saleUnitPrice),
         });
         setEditingBuyerId(id);
       },
@@ -259,6 +323,9 @@ export function AdminDataProvider({ children }) {
         setInventoryForm({
           inventoryName: item.inventoryName,
           inventoryQty: String(item.inventoryQty),
+          openingUnitCost: String(item.openingUnitCost),
+          packingCostPerUnit: String(item.packingCostPerUnit),
+          sellingPricePerUnit: String(item.sellingPricePerUnit),
           inventoryMax: String(item.inventoryMax),
           inventoryLow: String(item.inventoryLow),
         });
@@ -371,6 +438,34 @@ export function AdminDataProvider({ children }) {
         const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
         return inventoryMetrics[id]?.soldQty ?? 0;
       },
+      getInventoryCurrentUnitCost(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return inventoryMetrics[id]?.currentUnitCost ?? 0;
+      },
+      getInventoryCurrentStockValue(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return inventoryMetrics[id]?.currentStockValue ?? 0;
+      },
+      getInventoryLatestActualUnitCost(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return inventoryMetrics[id]?.latestActualUnitCost ?? 0;
+      },
+      getInventoryActualMarginPerUnit(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return actualCostRows.find((row) => row.inventoryId === id)?.actualMarginPerUnit ?? 0;
+      },
+      getInventoryCurrentMarginPerUnit(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return currentCostRows.find((row) => row.inventoryId === id)?.currentMarginPerUnit ?? 0;
+      },
+      getInventoryPackingCost(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return data.inventory.find((item) => item.id === id)?.packingCostPerUnit ?? 0;
+      },
+      getInventorySellingPrice(itemOrId) {
+        const id = typeof itemOrId === "string" ? itemOrId : itemOrId.id;
+        return data.inventory.find((item) => item.id === id)?.sellingPricePerUnit ?? 0;
+      },
       getSellerAvailableQty(id) {
         return supplierAvailability[id] ?? 0;
       },
@@ -381,13 +476,18 @@ export function AdminDataProvider({ children }) {
         const seller = data.sellers.find((item) => item.id === id);
         return seller ? `${seller.sellerName} - ${seller.materialName}` : "-";
       },
+      getSellerUnitCost(id) {
+        return data.sellers.find((item) => item.id === id)?.materialUnitCost ?? 0;
+      },
       getInventoryName(id) {
         return data.inventory.find((item) => item.id === id)?.inventoryName || "-";
       },
     }),
     [
+      actualCostRows,
       alerts,
       buyerForm,
+      currentCostRows,
       data,
       editingBuyerId,
       editingInventoryId,
@@ -435,6 +535,7 @@ function normalizeSellers(records) {
     sellerName: item.sellerName || "",
     materialName: item.materialName || "",
     materialQty: Number(item.materialQty) || 0,
+    materialUnitCost: Number(item.materialUnitCost) || 0,
     sellerContact: item.sellerContact || "",
   }));
 }
@@ -446,6 +547,9 @@ function normalizeInventory(records) {
     id: item.id || `inventory-${index + 1}-${Math.random().toString(36).slice(2, 8)}`,
     inventoryName: item.inventoryName || "",
     inventoryQty: Number(item.inventoryQty) || 0,
+    openingUnitCost: Number(item.openingUnitCost) || 0,
+    packingCostPerUnit: Number(item.packingCostPerUnit) || 0,
+    sellingPricePerUnit: Number(item.sellingPricePerUnit) || 0,
     inventoryMax: Number(item.inventoryMax) || 0,
     inventoryLow: Number(item.inventoryLow) || 0,
   }));
@@ -482,6 +586,7 @@ function normalizeBuyers(records, inventory) {
 
   return source.map((item, index) => {
     const matchedInventory = inventory.find((record) => record.inventoryName === item.buyerProduct);
+    const inventoryItem = inventory.find((record) => record.id === item.inventoryItemId) || matchedInventory;
 
     return {
       id: item.id || `buyer-${index + 1}-${Math.random().toString(36).slice(2, 8)}`,
@@ -494,6 +599,8 @@ function normalizeBuyers(records, inventory) {
       buyerQty: Number(item.buyerQty) || 0,
       deliveryDate: item.deliveryDate || "",
       orderStatus: item.orderStatus || "Pending",
+      saleUnitPrice: Number(item.saleUnitPrice) || Number(inventoryItem?.sellingPricePerUnit) || 0,
+      costUnitPrice: Number(item.costUnitPrice) || 0,
     };
   });
 }
@@ -514,36 +621,86 @@ function buildSupplierAvailability(data) {
   return availability;
 }
 
-function buildInventoryMetrics(data) {
-  const producedById = {};
-  const soldById = {};
+function buildProcessCostMetrics(data) {
+  return Object.fromEntries(
+    data.processing.map((item) => {
+      const seller = data.sellers.find((record) => record.id === item.sourceSellerId);
+      const inventoryItem = data.inventory.find((record) => record.id === item.inventoryItemId);
+      const rawMaterialUnitCost = Number(seller?.materialUnitCost) || 0;
+      const packingCostPerUnit = Number(inventoryItem?.packingCostPerUnit) || 0;
+      const rawMaterialTotalCost = rawMaterialUnitCost * (Number(item.inputQty) || 0);
+      const packingTotalCost = packingCostPerUnit * (Number(item.outputQty) || 0);
+      const processExtraCost = Number(item.featureCost) || 0;
+      const actualTotalCost = rawMaterialTotalCost + packingTotalCost + processExtraCost;
+      const actualUnitCost = Number(item.outputQty) > 0 ? actualTotalCost / Number(item.outputQty) : 0;
+      const processCostPerUnit = Number(item.outputQty) > 0 ? processExtraCost / Number(item.outputQty) : 0;
 
-  data.processing.forEach((item) => {
-    if (item.processStatus === "Completed") {
-      producedById[item.inventoryItemId] = (producedById[item.inventoryItemId] || 0) + (Number(item.outputQty) || 0);
-    }
-  });
+      return [
+        item.id,
+        {
+          rawMaterialUnitCost,
+          packingCostPerUnit,
+          rawMaterialTotalCost,
+          packingTotalCost,
+          processExtraCost,
+          actualTotalCost,
+          actualUnitCost,
+          processCostPerUnit,
+        },
+      ];
+    }),
+  );
+}
 
-  data.buyers.forEach((item) => {
-    if (item.orderStatus === "Fulfilled") {
-      soldById[item.inventoryItemId] = (soldById[item.inventoryItemId] || 0) + (Number(item.buyerQty) || 0);
-    }
-  });
-
+function buildInventoryMetrics(data, processCostMetrics) {
   return Object.fromEntries(
     data.inventory.map((item) => {
+      const completedProcesses = data.processing.filter(
+        (record) => record.inventoryItemId === item.id && record.processStatus === "Completed",
+      );
+      const fulfilledSales = data.buyers.filter(
+        (record) => record.inventoryItemId === item.id && record.orderStatus === "Fulfilled",
+      );
       const openingQty = Number(item.inventoryQty) || 0;
-      const producedQty = producedById[item.id] || 0;
-      const soldQty = soldById[item.id] || 0;
-      const currentQty = openingQty + producedQty - soldQty;
+      const openingUnitCost = Number(item.openingUnitCost) || 0;
+      const openingValue = openingQty * openingUnitCost;
+      const producedQty = completedProcesses.reduce((total, record) => total + (Number(record.outputQty) || 0), 0);
+      const producedValue = completedProcesses.reduce(
+        (total, record) => total + (processCostMetrics[record.id]?.actualTotalCost || 0),
+        0,
+      );
+      const soldQty = fulfilledSales.reduce((total, record) => total + (Number(record.buyerQty) || 0), 0);
+      const soldRevenue = fulfilledSales.reduce(
+        (total, record) => total + (Number(record.buyerQty) || 0) * (Number(record.saleUnitPrice) || 0),
+        0,
+      );
+      const availableBaseQty = openingQty + producedQty;
+      const currentUnitCost = availableBaseQty > 0 ? (openingValue + producedValue) / availableBaseQty : 0;
+      const currentQty = availableBaseQty - soldQty;
+      const currentStockValue = currentQty * currentUnitCost;
+      const latestCompletedProcess = completedProcesses[0];
+      const latestCompletedCost = latestCompletedProcess
+        ? processCostMetrics[latestCompletedProcess.id]
+        : null;
+      const latestActualUnitCost = latestCompletedCost?.actualUnitCost || currentUnitCost;
+      const latestRawUnitCost = latestCompletedCost?.rawMaterialUnitCost || openingUnitCost;
+      const latestProcessCostPerUnit = latestCompletedCost?.processCostPerUnit || 0;
 
       return [
         item.id,
         {
           openingQty,
+          openingValue,
           producedQty,
+          producedValue,
           soldQty,
+          soldRevenue,
           currentQty,
+          currentUnitCost,
+          currentStockValue,
+          latestActualUnitCost,
+          latestRawUnitCost,
+          latestProcessCostPerUnit,
           status: getInventoryStatusFromQty(currentQty, item),
         },
       ];

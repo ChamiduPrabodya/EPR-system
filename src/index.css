@@ -865,6 +865,21 @@ a {
   border: 1px solid var(--line);
 }
 
+.panel-button {
+  cursor: pointer;
+}
+
+.form-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  font-size: 0.86rem;
+}
+
 .data-table-card {
   display: grid;
   gap: 14px;
@@ -977,6 +992,17 @@ tbody tr:hover {
 .alert-item {
   background: var(--red-soft);
   border-color: rgba(196, 91, 69, 0.14);
+}
+
+.cost-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.cost-grid > .panel:first-child {
+  border-bottom: 1px solid var(--line);
 }
 
 .empty-state {

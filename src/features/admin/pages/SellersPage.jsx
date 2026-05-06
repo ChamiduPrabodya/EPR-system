@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { appTheme } from "../../../app/theme";
+import { formatCurrency } from "../../../common/utils/formatters";
 import PageIntro from "../components/PageIntro";
 import SellerSection from "../components/sections/SellerSection";
 import { useAdminData } from "../context/AdminDataContext";
@@ -18,6 +19,10 @@ export default function SellersPage() {
   } = useAdminData();
   const totalMaterialQty = data.sellers.reduce((total, item) => total + item.materialQty, 0);
   const totalAvailableQty = data.sellers.reduce((total, item) => total + getSellerAvailableQty(item.id), 0);
+  const totalPurchaseValue = data.sellers.reduce(
+    (total, item) => total + item.materialQty * item.materialUnitCost,
+    0,
+  );
 
   useEffect(() => {
     document.title = `${appTheme.appTitle} | Sellers`;
@@ -34,6 +39,7 @@ export default function SellersPage() {
           { label: "Suppliers", value: data.sellers.length },
           { label: "Received", value: totalMaterialQty },
           { label: "Available", value: totalAvailableQty },
+          { label: "Purchase value", value: formatCurrency(totalPurchaseValue) },
         ]}
       />
       <SellerSection

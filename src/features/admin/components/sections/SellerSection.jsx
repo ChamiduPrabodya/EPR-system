@@ -1,5 +1,6 @@
 import DataTable from "../../../../common/components/DataTable";
 import FormField from "../../../../common/components/FormField";
+import { formatCurrency } from "../../../../common/utils/formatters";
 
 export default function SellerSection({
   form,
@@ -19,13 +20,14 @@ export default function SellerSection({
           title="Supplier receipts"
           description="These raw-material receipts feed operations. Available quantity drops as jobs consume material."
           emptyMessage="No supplier receipts yet. Add the first supplier intake on the right."
-          headers={["Supplier", "Material", "Received", "Available", "Contact", "Actions"]}
+          headers={["Supplier", "Material", "Qty", "Unit Cost", "Total Cost", "Available", "Actions"]}
           rows={items.map((seller) => [
             seller.sellerName,
             seller.materialName,
             seller.materialQty,
+            formatCurrency(seller.materialUnitCost),
+            formatCurrency(seller.materialQty * seller.materialUnitCost),
             getSellerAvailableQty(seller.id),
-            seller.sellerContact,
             <div className="table-actions" key={seller.id}>
               <button className="table-action-button" type="button" onClick={() => onEdit(seller.id)}>
                 Edit
@@ -46,9 +48,9 @@ export default function SellerSection({
         <div className="panel-head">
           <div>
             <p className="eyebrow">{editingId ? "Edit supplier" : "Quick add"}</p>
-            <h3 id="sellers">Create a supplier receipt and log incoming raw material</h3>
+            <h3 id="sellers">Create a supplier receipt and raw material cost</h3>
             <p className="panel-copy">
-              Supplier receipts are the first step in the ERP flow. Operations will use this quantity later.
+              This is the purchase-side cost. Operations will consume this material cost later.
             </p>
           </div>
         </div>
@@ -67,7 +69,7 @@ export default function SellerSection({
           <FormField label="Raw material">
             <input
               type="text"
-              placeholder="Dried herbs"
+              placeholder="Carrot"
               required
               value={form.materialName}
               onChange={(event) => onChange("materialName", event.target.value)}
@@ -78,10 +80,21 @@ export default function SellerSection({
             <input
               type="number"
               min="1"
-              placeholder="250"
+              placeholder="12"
               required
               value={form.materialQty}
               onChange={(event) => onChange("materialQty", event.target.value)}
+            />
+          </FormField>
+
+          <FormField label="Unit cost">
+            <input
+              type="number"
+              min="0"
+              placeholder="50"
+              required
+              value={form.materialUnitCost}
+              onChange={(event) => onChange("materialUnitCost", event.target.value)}
             />
           </FormField>
 

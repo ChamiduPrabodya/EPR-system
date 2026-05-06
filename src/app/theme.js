@@ -59,6 +59,13 @@ export const appTheme = {
       summaryKey: "inventory",
       shortLabel: "IN",
     },
+    {
+      label: "Costs",
+      to: appRoutes.adminCosts,
+      description: "Actual and current product cost",
+      summaryKey: "inventory",
+      shortLabel: "CO",
+    },
   ],
   pageMeta: {
     [appRoutes.admin]: {
@@ -85,6 +92,11 @@ export const appTheme = {
       eyebrow: "Inventory",
       title: "Inventory workspace",
       description: "Monitor stock on hand, capacity, and alert thresholds from one place.",
+    },
+    [appRoutes.adminCosts]: {
+      eyebrow: "Costs",
+      title: "Product cost workspace",
+      description: "Review actual cost, current cost, and print both views for each product.",
     },
   },
 };
